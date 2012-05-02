@@ -8,7 +8,7 @@ In json string:  [{"temp":"hello", "a":{"c":1}}, {"b":[5, 7, {"a":1}, {"d":123}]
 Code generated:
 public JSONObject getJSONObjectForKey_a_FromJsonString(String theJsonString)
 {
-  JSONObject jObj;
+	JSONObject jObj;
 	JSONArray jArr;
 	jArr = new JSONArray(theJsonString);
 	jObj = jArr.getJSONObject(0);
