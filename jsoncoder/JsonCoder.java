@@ -1,11 +1,4 @@
 package jsoncoder;
-/*
- * Get the return value
- * Get the object which is called
- * jObj = jArr.getJSONObject()
- * 
- * 
- */
 
 import java.util.HashMap;
 import java.util.HashSet;
