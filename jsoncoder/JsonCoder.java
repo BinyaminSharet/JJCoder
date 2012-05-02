@@ -1,10 +1,6 @@
 package jsoncoder;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 import org.json.JSONArray;
@@ -14,22 +10,15 @@ import org.json.JSONObject;
 
 public class JsonCoder 
 {
-	private static Map<Class<?>, String> vars = new HashMap<Class<?>, String>();
-	private static Map<Class<?>, String> methods = new HashMap<Class<?>, String>();
-	static
-	{
-		vars.put(JSONObject.class, 		"jObj");
-		vars.put(JSONArray.class, 		"jArr");
-		methods.put(JSONObject.class, 	"JSONObject");
-		methods.put(JSONArray.class, 	"JSONArray");
-	}
-	private final Stack<ParsePoint> pstack = new Stack<ParsePoint>();  
+	private final Stack<ParsePoint> pstack = new Stack<ParsePoint>();
 	private String key;
-	private final Set<Class<?>> objectsSet = new HashSet<Class<?>>();
+	
 	
 	private boolean parse(JSONObject jobj) throws JSONException
 	{
-		Iterator<String> iter = jobj.keys();
+		@SuppressWarnings("unchecked")
+		Iterator<String> keys = (Iterator<String>)jobj.keys();
+		Iterator<String> iter = keys;
 		while (iter.hasNext()) {
 			String currentKey = iter.next();
 			if (currentKey.equals(key) ) 
@@ -106,110 +95,12 @@ public class JsonCoder
 		return false;
 	}
 
-	private String buildAssignmentStatement(ParsePoint point, String align)
-	{
-		String retObj = vars.get(point.returnType);
-		retObj = (retObj == null) ? "targetObj" : retObj;
-		String callObj = vars.get(point.callerType);
-		String getMethod = methods.get(point.returnType);
-		getMethod = (getMethod == null) ? "" : getMethod; 
-		String res = String.format("%s%s = %s.get%s(%s);\n", align, retObj, callObj, getMethod, point.param);
-		objectsSet.add(point.returnType);
-		return res;
-	}
-
-	private String buildReturnStatement(ParsePoint point)
-	{
-		String retObj = vars.get(point.returnType);
-		retObj = (retObj == null) ? "targetObj" : retObj;
-		return "\treturn " + retObj + ";\n}";
-	}
-	
-	private String buildPrototype()
-	{
-		ParsePoint first = pstack.firstElement();
-		String returnType = methods.get(first.returnType);
-		if (returnType  == null)
-		{
-			returnType = "Object";
-		}
-		return "public static " + returnType + 
-				" get" + returnType + "ForKey_" + key + "_FromJsonString(String theJsonString)" + 
-				" throws JSONException" + "\n{\n";
-	}
-	
-	private String buildDeclaration(String alignment)
-	{
-		String res = "";
-		if (objectsSet.remove(JSONObject.class))
-		{
-			res += alignment + "JSONObject jObj;\n";
-		}
-		if (objectsSet.remove(JSONArray.class))
-		{
-			res += alignment + "JSONArray jArr;\n";
-		}
-		if (!objectsSet.isEmpty())
-		{
-			res += alignment + "Object targetObj;\n";
-		}
-		return res;
-	}
-	
-	private String buildInstantiationStatement(String alignment)
-	{
-		String res;
-		objectsSet.add(pstack.lastElement().callerType);
-		if (pstack.lastElement().callerType == JSONObject.class) 
-		{
-			res = alignment + "jObj = new JSONObject(theJsonString);\n";
-		}
-		else 
-		{
-			res = alignment + "jArr = new JSONArray(theJsonString);\n";
-		}
-		return res;
-	}
-	
 	public String generateCode(boolean methodWrap)
 	{
-		if (pstack.isEmpty())
-		{
-			throw new IllegalStateException("JSON not parsed, can't generate code");
-		}
-		StringBuilder sb = new StringBuilder();
-		ParsePoint current;
-		String alignment = methodWrap ? "\t" : "";
-		String prototype = buildPrototype();
-		sb.append(buildInstantiationStatement(alignment));
-		do  
-		{
-			current = pstack.pop();
-			sb.append(buildAssignmentStatement(current, alignment));
-		}while (!pstack.empty());
-		sb.insert(0, buildDeclaration(alignment));
-		if (methodWrap)
-		{
-			sb.insert(0, prototype);
-			sb.append(buildReturnStatement(current));
-		}
-		return sb.toString();
+		return new CodeGen(pstack).generateCode(methodWrap);
 	}
-
 	private String qoute(String s) {
 		return "\"" + s + "\"";
-	}
-
-	private static class ParsePoint {
-		final public Class<?> returnType;
-		final public Class<?> callerType;
-		final public String param;
-		public ParsePoint(Class<?> returnType, Class<?> callerType, String param)
-		{
-			this.param = param;
-			this.callerType = callerType;
-			this.returnType = returnType;
-		}
 	}
 	
 }
