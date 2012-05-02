@@ -1,0 +1,17 @@
+The code uses the JSON implementation by json.org, downloaded from here.
+The code may be downloaded from my Github.
+
+Output example:
+
+Generating code to access the key "a"
+In json string:  [{"temp":"hello", "a":{"c":1}}, {"b":[5, 7, {"a":1}, {"d":123}]}]
+Code generated:
+public JSONObject getJSONObjectForKey_a_FromJsonString(String theJsonString)
+{
+  JSONObject jObj;
+	JSONArray jArr;
+	jArr = new JSONArray(theJsonString);
+	jObj = jArr.getJSONObject(0);
+	jObj = jObj.getJSONObject("a");
+	return jObj;
+}
