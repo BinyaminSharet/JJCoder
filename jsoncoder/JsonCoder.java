@@ -99,8 +99,10 @@ public class JsonCoder
 	{
 		return new CodeGen(pstack).generateCode(methodWrap);
 	}
+	
 	private String qoute(String s) {
-		return "\"" + s + "\"";
+		//return "\"" + s + "\"";
+		return s;
 	}
 	
 }

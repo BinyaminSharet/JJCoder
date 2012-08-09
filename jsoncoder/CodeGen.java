@@ -25,19 +25,20 @@ public class CodeGen {
 	
 	private String buildAssignmentStatement(ParsePoint point, String align)
 	{
-		String retObj = vars.get(point.returnType);
+		Class<?> returnType = point.getReturnType();
+		String retObj = vars.get(returnType);
 		retObj = (retObj == null) ? "targetObj" : retObj;
-		String callObj = vars.get(point.callerType);
-		String getMethod = methods.get(point.returnType);
+		String callObj = vars.get(point.getCallerType());
+		String getMethod = methods.get(returnType);
 		getMethod = (getMethod == null) ? "" : getMethod; 
-		String res = String.format("%s%s = %s.get%s(%s);\n", align, retObj, callObj, getMethod, point.param);
-		objectsSet.add(point.returnType);
+		String res = String.format("%s%s = %s.get%s(%s);\n", align, retObj, callObj, getMethod, point.getParamForMethodCall());
+		objectsSet.add(returnType);
 		return res;
 	}
 
 	private String buildReturnStatement(ParsePoint point)
 	{
-		String retObj = vars.get(point.returnType);
+		String retObj = vars.get(point.getReturnType());
 		retObj = (retObj == null) ? "targetObj" : retObj;
 		return "\treturn " + retObj + ";\n}";
 	}
@@ -45,17 +46,21 @@ public class CodeGen {
 	private String buildPrototype()
 	{
 		ParsePoint first = pstack.firstElement();
-		String returnType = methods.get(first.returnType);
-		String key = first.param;
+		String returnType = methods.get(first.getReturnType());
+		String key = first.getParam();
 		if (returnType  == null)
 		{
 			returnType = "Object";
 		}
 		return "public static " + returnType + 
-				" get" + returnType + "ForKey_" + key + "_FromJsonString(String theJsonString)" + 
+				" get" + returnType + "ForKey_" + synthesize(key) + "_FromJsonString(String theJsonString)" + 
 				" throws JSONException" + "\n{\n";
 	}
 	
+	private String synthesize(String str)
+	{
+		return str.replaceAll("[^A-Za-z0-9$]", "_");
+	}
 	private String buildDeclaration(String alignment)
 	{
 		String res = "";
@@ -77,8 +82,9 @@ public class CodeGen {
 	private String buildInstantiationStatement(String alignment)
 	{
 		String res;
-		objectsSet.add(pstack.lastElement().callerType);
-		if (pstack.lastElement().callerType == JSONObject.class) 
+		Class<?> lastElementCaller = pstack.lastElement().getCallerType();
+		objectsSet.add(lastElementCaller);
+		if (lastElementCaller == JSONObject.class) 
 		{
 			res = alignment + "jObj = new JSONObject(theJsonString);\n";
 		}
